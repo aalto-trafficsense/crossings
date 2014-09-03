@@ -103,8 +103,8 @@ def extract_intersections(osm, verbose=True):
 def print_coordinates(osm):
     c = extract_intersections(osm)
     for id in c:
-        print c[id].coordinate_string()  + ' - ' + str(c[id].counter)
-        print len(c[id].ways)
+        print c[id].coordinate_string()  # + ' - ' + str(c[id].counter)
+        # print len(c[id].ways)
 
 print_coordinates("../data/otaniemi.osm")
 
