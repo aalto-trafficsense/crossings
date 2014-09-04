@@ -1,6 +1,6 @@
 try:
     from xml.etree import cElementTree as ET
-except ImportError, e:
+except ImportError as e:
     from xml.etree import ElementTree as ET
 
 roadtypes = {'motorway', 'trunk', 'primary', 'secondary', 'tertiary',
@@ -57,8 +57,15 @@ class Crossing:
           return self.lat() + ',' + self.long()
       def properCrossing(self):
           return self.counter > 2
-      def closeBy(self, other, e=1):
-          return abs(self.lat() - other.lat()) < e and abs(self.long() - other.long()) < e             
+      def closeBy(self, other, e = 0.0001):
+          return abs(float(self.lat()) - float(other.lat())) < e and abs(float(self.long()) - float(other.long())) < e
+      def closeByCrossings(self, crossings):
+          result = []
+          for c in crossings:
+              cr = crossings[c]
+              if cr != self and self.closeBy(cr):
+                  result.append(cr)
+          return result         
     
 def extract_intersections(osm, verbose=True):
     # This function takes an osm file as an input. It then goes through each xml 
@@ -92,20 +99,34 @@ def extract_intersections(osm, verbose=True):
     # might correspond to intersections
 
     #intersections = filter(lambda x: counter[x] > 2,  counter)
-    crossings = dict(filter(lambda (k, v): crossings[k].properCrossing(), crossings.items()))
+    crossings = dict(filter(lambda k: crossings[k[0]].properCrossing(), crossings.items()))
 
     # Extract intersection coordinates
     # You can plot the result using this url.
     # http://www.darrinward.com/lat-long/
-    print len(crossings)
+    print(len(crossings))
     return crossings
 
 def print_coordinates(osm):
     c = extract_intersections(osm)
     for id in c:
-        print c[id].coordinate_string()  # + ' - ' + str(c[id].counter)
-        # print len(c[id].ways)
+        print(c[id].coordinate_string())
 
+def print_crossings(osm):
+    c = extract_intersections(osm)
+    for id in c:
+        print(c[id].coordinate_string() + ' - ' + str(len(c[id].ways)) + '(' +str(c[id].counter) + ')')
+        for w in c[id].ways:
+                for t in w:
+                    if t.tag == 'tag' and t.attrib['k'] == 'name':
+                        print(' %r' % t.attrib['v'])
+        for n in c[id].closeByCrossings(c):
+            print('   %r' % n)
+            for w in n.ways:
+                for t in w:
+                    if t.tag == 'tag' and t.attrib['k'] == 'name':
+                        print('        %r' % t.attrib['v'])
+        
 print_coordinates("../data/otaniemi.osm")
 
 
