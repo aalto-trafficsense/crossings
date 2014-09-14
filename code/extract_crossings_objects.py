@@ -125,6 +125,18 @@ class Crossing:
                         return c.clusterCrossing(crossingMap, newCrossingMap)
                     else:
                         return self
+
+# class Waypoint (Crossing):
+#       obsoletes = {}
+#       # def __init__(self):
+            
+#       def obsoleteCrossing(c):
+#            self.obsoletes.add(c)
+#            c.obsoletedBy = self
+#       def obsoleteCrossings(cs):
+#             for c in cs:
+#                   self.obsoleteCrossing(c)
+                  
       
     
 def extract_intersections(osm, verbose=True):
@@ -171,7 +183,9 @@ def print_coordinates(osm):
     clusters = cluster_crossings(c)
     print('Crossings')
     for id in c:
-        c[id].printCoordinates()
+          p = c[id]
+          if p.obsoletedBy == None and not p.fakeCrossing():
+             p.printCoordinates()
     print('Clustered crossings')
     for id in clusters:
           if clusters[id].obsoletedBy == None:
