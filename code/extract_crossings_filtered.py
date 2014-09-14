@@ -4,15 +4,23 @@ except ImportError, e:
     from xml.etree import ElementTree as ET
 
 roadtypes = {'motorway', 'trunk', 'primary', 'secondary', 'tertiary',
-             'unclassified', 'residential', 'minor'
-             #'service'
+             'unclassified', 'residential', 'minor', 'service'
              }
 
+# Returns true if this way belongs to <roadtypes>    
 def roadp(element):
     if element.tag == 'way':
         for item in element:
-            if item.tag == 'tag' and item.attrib['k']=="highway":
+            if (item.tag == 'tag' and item.attrib['k']=="highway"):
                 return item.attrib['v'] in roadtypes
+    return False
+
+# Returns true if the name length > 1
+def namep(element):
+    if element.tag == 'way':
+        for item in element:
+            if (item.tag == 'tag' and item.attrib['k']=="name" and len(item.attrib['v'])>1):
+                return True
     return False
 
 def node_increment(node, way):
@@ -42,7 +50,7 @@ def extract_intersections(osm, verbose=True):
     root = tree.getroot()
     counter = {}
     for child in root:
-        if roadp(child):
+        if roadp(child) and namep(child):
            for item in child:
                if item.tag == 'nd':
                   nd_ref = item.attrib['ref']
@@ -69,4 +77,4 @@ def extract_intersections(osm, verbose=True):
 
     return intersection_coordinates
 
-extract_intersections("otaniemi.osm")
+extract_intersections("../data/otaniemi.osm")
