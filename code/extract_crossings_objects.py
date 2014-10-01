@@ -199,6 +199,7 @@ def print_crossings(osm):
         for n in c[id].closeByCrossings(c):
             n.printCrossing(c)
         
-print_coordinates("../data/otaniemi.osm")
+# print_coordinates("../data/otaniemi.osm")
+print_coordinates("../../../../TGE/Projects/TrafficSense/Code/Helsinki.osm")
 
 
