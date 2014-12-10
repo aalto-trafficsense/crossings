@@ -102,6 +102,8 @@ CREATE TABLE roadsnodesdata AS
     )
 ;
 
+ALTER TABLE roadsnodesdata ADD PRIMARY KEY (node_id);
+ALTER TABLE roadsnodesdata ALTER COLUMN geom SET NOT NULL;
 
 /* CreateRoadsNodesWithDifferentNamesList */
 
