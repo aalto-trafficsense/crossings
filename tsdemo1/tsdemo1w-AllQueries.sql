@@ -72,6 +72,10 @@ CREATE TABLE roadsnodesinorder AS
     roadslist.road_id = planet_osm_ways.id
 ;
 
+ALTER TABLE roadsnodesinorder ALTER COLUMN road_id SET NOT NULL;
+ALTER TABLE roadsnodesinorder ALTER COLUMN rn SET NOT NULL;
+ALTER TABLE roadsnodesinorder ALTER COLUMN node_id SET NOT NULL;
+
 /* CreateRoadsNodesData */
 
 /* 	This query creates the roadsnodesdata table with the geometrical data of the nodes that are elements of the road network.
