@@ -30,6 +30,10 @@ CREATE TABLE roadslist AS
     highway NOT IN ('cycleway', 'footway', 'pedestrian', 'steps', 'service', 'path', 'platform', 'construction')
 ;
 
+ALTER TABLE roadslist ALTER COLUMN road_id SET NOT NULL;
+ALTER TABLE roadslist ALTER COLUMN geom SET NOT NULL;
+ALTER TABLE roadslist ALTER COLUMN oneway SET NOT NULL;
+CREATE INDEX ON roadslist (road_id);
 
 /* CreateRoadsNodesInOrder */
 
