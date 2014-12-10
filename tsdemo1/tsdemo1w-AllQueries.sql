@@ -38,7 +38,7 @@ DROP TABLE IF EXISTS roadslist;
 
 CREATE TABLE roadslist AS
   SELECT DISTINCT
-    osm_id as road_id, name, oneway, way as geom
+    osm_id as road_id, name, (CASE WHEN oneway='yes' THEN true ELSE false END) AS oneway, way as geom
   FROM
     planet_osm_line
   WHERE
