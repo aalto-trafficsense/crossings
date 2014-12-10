@@ -75,6 +75,7 @@ CREATE TABLE roadsnodesinorder AS
 ALTER TABLE roadsnodesinorder ALTER COLUMN road_id SET NOT NULL;
 ALTER TABLE roadsnodesinorder ALTER COLUMN rn SET NOT NULL;
 ALTER TABLE roadsnodesinorder ALTER COLUMN node_id SET NOT NULL;
+CREATE INDEX ON roadsnodesinorder (node_id);
 
 /* CreateRoadsNodesData */
 
