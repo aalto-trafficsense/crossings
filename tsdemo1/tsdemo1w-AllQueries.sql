@@ -87,32 +87,20 @@ CREATE INDEX ON roadsnodesinorder (node_id);
 
 	The geometrical information is included in other tables too, even if there might be joins to the current table. The reason is that the visualization of a table requires the geometrical information being existed in one of its fields and not in a joined field of another table. This means that a query cannot be visualized directly.
 */
-	
-
-
 
 DROP TABLE IF EXISTS roadsnodesdata;
 
 CREATE TABLE roadsnodesdata AS
-
-	SELECT 
-		roadsnodeslist.node_id, ST_SetSRID(ST_MakePoint((lon::double precision)/100,(lat::double precision)/100),900913) as geom
-
-	FROM
-		planet_osm_nodes,
-
-		(
-			SELECT DISTINCT
-				node_id
-			FROM
-				roadsnodesinorder
-		) AS roadsnodeslist
-
-		WHERE
-			planet_osm_nodes.id=roadsnodeslist.node_id
+  SELECT
+    id AS node_id,
+    ST_SetSRID(ST_MakePoint((lon::double precision) / 100, (lat::double precision) / 100), 900913) as geom
+  FROM
+    planet_osm_nodes
+  WHERE
+    id IN (
+      SELECT node_id FROM roadsnodesinorder
+    )
 ;
-		
-
 
 
 /* CreateRoadsNodesWithDifferentNamesList */
