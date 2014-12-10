@@ -16,29 +16,14 @@
 
 /* CreateRoadsList */
 
-/*	This query selects from the planet_osm_line table the following columns:
-		osm_id as road_id,
-		name,
-		oneway (yes, no, null)
-		way as geom (the string used by postgis to store the geometrical information)
-
-	Lines are selected as roads if the highway field contains a value and this is not one of the following:
-		cycleway,
-		footway,
-		pedestrian,
-		steps,
-		service,
-		path,
-		platform,
-		construction
-
-*/
-
 DROP TABLE IF EXISTS roadslist;
 
 CREATE TABLE roadslist AS
   SELECT DISTINCT
-    osm_id as road_id, name, (CASE WHEN oneway='yes' THEN true ELSE false END) AS oneway, way as geom
+    osm_id as road_id,
+    name,
+    CASE WHEN oneway = 'yes' THEN true ELSE false END AS oneway,
+    way as geom
   FROM
     planet_osm_line
   WHERE
