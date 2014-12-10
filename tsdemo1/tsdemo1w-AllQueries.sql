@@ -59,29 +59,18 @@ CREATE INDEX ON roadslist (road_id);
 
 DROP TABLE IF EXISTS roadsnodesinorder;
 
-CREATE TABLE
-	roadsnodesinorder
-AS
-
-	SELECT
-		id as road_id, rn, nodes[rn] AS node_id
-	FROM
-		(
-			SELECT
-				id, nodes, generate_subscripts(planet_osm_ways.nodes, 1) AS rn
-			FROM
-				planet_osm_ways
-		) as nodesofways,
-		
-		roadslist
-
-	WHERE
-		roadslist.road_id=nodesofways.id
+CREATE TABLE roadsnodesinorder AS
+  SELECT
+    road_id,
+    unnest(nodes) AS node_id,
+    generate_subscripts(nodes, 1) AS rn
+  FROM
+    roadslist
+  JOIN
+    planet_osm_ways
+  ON
+    roadslist.road_id = planet_osm_ways.id
 ;
-
-
-
-
 
 /* CreateRoadsNodesData */
 
