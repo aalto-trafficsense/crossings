@@ -71,3 +71,7 @@ CREATE TABLE nodes_crossings AS
         COUNT(DISTINCT(COALESCE(name, ''))) > 1
     )
 ;
+
+ALTER TABLE nodes_crossings ADD PRIMARY KEY (id);
+ALTER TABLE nodes_crossings ALTER COLUMN coord SET NOT NULL;
+CREATE INDEX ON nodes_crossings USING GIST (coord);
