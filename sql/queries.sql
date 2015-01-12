@@ -46,3 +46,28 @@ ALTER TABLE roads_nodes ALTER COLUMN idx SET NOT NULL;
 ALTER TABLE roads_nodes ALTER COLUMN node_id SET NOT NULL;
 CREATE INDEX ON roads_nodes (road_id);
 CREATE INDEX ON roads_nodes (node_id);
+
+DROP TABLE IF EXISTS nodes_crossings;
+
+CREATE TABLE nodes_crossings AS
+  SELECT
+    id,
+    ST_SetSRID(ST_MakePoint((lon::double precision) / 100, (lat::double precision) / 100), 900913) as coord
+  FROM
+    planet_osm_nodes
+  WHERE
+    id IN (
+      SELECT
+        node_id
+      FROM
+        roads_nodes
+      JOIN
+        roads
+      ON
+        roads.id = road_id
+      GROUP BY
+        node_id
+      HAVING
+        COUNT(DISTINCT(COALESCE(name, ''))) > 1
+    )
+;
