@@ -75,3 +75,26 @@ CREATE TABLE nodes_crossings AS
 ALTER TABLE nodes_crossings ADD PRIMARY KEY (id);
 ALTER TABLE nodes_crossings ALTER COLUMN coord SET NOT NULL;
 CREATE INDEX ON nodes_crossings USING GIST (coord);
+
+DROP TABLE IF EXISTS intersections CASCADE;
+
+CREATE TABLE intersections AS
+  SELECT
+  DISTINCT ON (centroid)
+    centroid,
+    nodes
+  FROM (
+    SELECT
+      node1.id,
+      ST_Centroid(ST_Collect(node2.coord)) AS centroid,
+      array_agg(node2.id) AS nodes
+    FROM
+      nodes_crossings AS node1
+    JOIN
+      nodes_crossings AS node2
+    ON
+      ST_DWithin(node1.coord, node2.coord, 55)
+    GROUP BY
+      node1.id
+  ) AS centroids
+;
