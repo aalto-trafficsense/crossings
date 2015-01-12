@@ -12,3 +12,7 @@ CREATE TABLE roads AS
   WHERE
     highway NOT IN ('cycleway', 'footway', 'pedestrian', 'steps', 'service', 'path', 'platform', 'construction')
 ;
+
+ALTER TABLE roads ADD PRIMARY KEY (id);
+ALTER TABLE roads ALTER COLUMN geom SET NOT NULL;
+ALTER TABLE roads ALTER COLUMN oneway SET NOT NULL;
