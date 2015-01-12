@@ -16,3 +16,27 @@ CREATE TABLE roads AS
 ALTER TABLE roads ADD PRIMARY KEY (id);
 ALTER TABLE roads ALTER COLUMN geom SET NOT NULL;
 ALTER TABLE roads ALTER COLUMN oneway SET NOT NULL;
+
+DROP TABLE IF EXISTS roads_nodes CASCADE;
+
+CREATE TABLE roads_nodes AS
+  SELECT
+    roads.id AS road_id,
+    node_id,
+    idx
+  FROM
+    roads
+  JOIN
+    (
+      SELECT
+        id AS road_id,
+        node_id,
+        idx
+      FROM
+        planet_osm_ways,
+        unnest(nodes)
+      WITH ORDINALITY x(node_id, idx)
+    ) AS nodes
+  ON
+    roads.id = nodes.road_id
+;
