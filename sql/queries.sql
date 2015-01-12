@@ -40,3 +40,9 @@ CREATE TABLE roads_nodes AS
   ON
     roads.id = nodes.road_id
 ;
+
+ALTER TABLE roads_nodes ALTER COLUMN road_id SET NOT NULL;
+ALTER TABLE roads_nodes ALTER COLUMN idx SET NOT NULL;
+ALTER TABLE roads_nodes ALTER COLUMN node_id SET NOT NULL;
+CREATE INDEX ON roads_nodes (road_id);
+CREATE INDEX ON roads_nodes (node_id);
