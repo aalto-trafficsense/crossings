@@ -283,6 +283,9 @@ WHERE
 	)
 ;
 
+ALTER TABLE poimplist ALTER COLUMN node_id SET NOT NULL;
+ALTER TABLE poimplist ALTER COLUMN geom SET NOT NULL;
+
 
 /* Find nodes that are geometrical dead ends.
 	These nodes are POImps independently of the mode.
