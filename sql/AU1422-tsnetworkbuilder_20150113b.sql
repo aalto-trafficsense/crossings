@@ -163,7 +163,7 @@ CREATE INDEX "idx-roadslist-geom"
 
 DROP TABLE IF EXISTS roadsnodesinorder;
 
-CREATE TEMPORARY TABLE roadsnodesinorder ON COMMIT DROP AS
+CREATE TEMPORARY TABLE roadsnodesinorder AS
 
 /*
 	The use of unnest speeds up the query and everything seems OK, although theoretically only the generate_subscripts version guarantees ordinal numbers of elements in the original array.
@@ -258,7 +258,7 @@ DROP TABLE IF EXISTS poimplist;
 
 
 
-CREATE TEMPORARY TABLE poimplist ON COMMIT DROP AS
+CREATE TEMPORARY TABLE poimplist AS
 
 
 SELECT roadsnodesdata.node_id, roadsnodesdata.geom
@@ -431,7 +431,7 @@ threshold :=2*radius;
 */
 
 DROP TABLE IF EXISTS tmppoimp2;
-CREATE TEMPORARY TABLE tmppoimp2 (gid bigint, the_geom geometry(Point), the_clusterid serial) ON COMMIT DROP;
+CREATE TEMPORARY TABLE tmppoimp2 (gid bigint, the_geom geometry(Point), the_clusterid serial);
 INSERT INTO tmppoimp2(gid, the_geom)
     (SELECT poimplist.node_id, poimplist.geom FROM poimplist); 
 
@@ -456,7 +456,7 @@ ALTER TABLE tmppoimp2 ADD COLUMN region_id integer;
 
 DROP TABLE IF EXISTS poimpregions;
 
-CREATE TEMPORARY TABLE poimpregions ON COMMIT DROP AS
+CREATE TEMPORARY TABLE poimpregions AS
 	SELECT ST_Dump(ST_UNION(ST_Buffer(tmppoimp2.the_geom,radius))) as dump
 	FROM tmppoimp2
 ;
@@ -510,7 +510,7 @@ ANALYZE tmppoimp2;
 
 DROP TABLE IF EXISTS tmppoimp2clusterspairs;
 
-CREATE TEMPORARY TABLE tmppoimp2clusterspairs ON COMMIT DROP AS
+CREATE TEMPORARY TABLE tmppoimp2clusterspairs AS
 
 
    SELECT a.region_id, a.the_clusterid as cluster_id1,b.the_clusterid as cluster_id2, ST_Distance(a.the_geom,b.the_geom) as dist
@@ -546,7 +546,7 @@ CREATE INDEX "idx-tmppoimp2clusterspairs-region_id"
 */
 
 DROP TABLE IF EXISTS tmppoimp2clusters;
-CREATE TEMPORARY TABLE tmppoimp2clusters ON COMMIT DROP AS
+CREATE TEMPORARY TABLE tmppoimp2clusters AS
    SELECT tmppoimp2.the_clusterid, ST_Collect(tmppoimp2.the_geom) as the_geom
         FROM tmppoimp2
 	GROUP BY the_clusterid
@@ -688,7 +688,7 @@ LANGUAGE plpgsql
 
 DROP TABLE IF EXISTS tmppoimpsclustered;
 
-CREATE TEMPORARY TABLE tmppoimpsclustered ON COMMIT DROP AS
+CREATE TEMPORARY TABLE tmppoimpsclustered AS
 
 
 SELECT (clusters).* FROM 
@@ -705,7 +705,7 @@ SELECT (clusters).* FROM
 
 DROP TABLE IF EXISTS tmpwaypoints;
 
-CREATE TEMPORARY TABLE tmpwaypoints ON COMMIT DROP AS
+CREATE TEMPORARY TABLE tmpwaypoints AS
 
 	SELECT DISTINCT
 		cluster_id, ST_Centroid(mycollection) AS geom
@@ -770,7 +770,7 @@ ALTER TABLE waypoints ADD PRIMARY KEY (wpt_id);
 
 DROP TABLE IF EXISTS tmpwaypointsoldnewids;
 
-CREATE TEMPORARY TABLE tmpwaypointsoldnewids (wpt_id bigint, geom geometry(Point,4326), internalid integer) ON COMMIT DROP;
+CREATE TEMPORARY TABLE tmpwaypointsoldnewids (wpt_id bigint, geom geometry(Point,4326), internalid integer);
 INSERT INTO tmpwaypointsoldnewids
 (SELECT 0, ST_Transform(geom,4326), cluster_id
 FROM tmpwaypoints)
@@ -836,7 +836,7 @@ ALTER TABLE tmpwaypointsoldnewids DROP COLUMN geom;
 */	
 
 DROP TABLE IF EXISTS tmproadslist2;
-CREATE TEMPORARY TABLE tmproadslist2 ON COMMIT DROP AS
+CREATE TEMPORARY TABLE tmproadslist2 AS
 
 
 	SELECT ST_MakeLine(ARRAY(SELECT roadsnodesdata.geom 
@@ -867,7 +867,7 @@ CREATE INDEX "idx-tmproadslist2-geom"
 */
 
 DROP TABLE IF EXISTS tmpcollectionofwaypointsbuffer;
-CREATE TEMPORARY TABLE tmpcollectionofwaypointsbuffer ON COMMIT DROP AS
+CREATE TEMPORARY TABLE tmpcollectionofwaypointsbuffer AS
 	SELECT ST_Union(wpt_buffer) as geom
 	FROM tmpwaypoints
 ;
@@ -887,7 +887,7 @@ CREATE INDEX "idx-tmpcollectionofwaypointsbuffer-geom"
 */
 
 DROP TABLE IF EXISTS tmproadslist3;
-CREATE TEMPORARY TABLE tmproadslist3 ON COMMIT DROP AS
+CREATE TEMPORARY TABLE tmproadslist3 AS
 
 	SELECT (ST_Dump(ST_Difference(tmproadslist2.geom,tmpcollectionofwaypointsbuffer.geom))).geom as geom
 	 FROM tmpcollectionofwaypointsbuffer, tmproadslist2
@@ -926,7 +926,7 @@ CREATE INDEX "idx-tmproadslist3-geom"
 */
 
 DROP TABLE IF EXISTS tmpcollectionofwaypoints;
-CREATE TEMPORARY TABLE tmpcollectionofwaypoints ON COMMIT DROP AS
+CREATE TEMPORARY TABLE tmpcollectionofwaypoints AS
 	SELECT ST_Collect(geom) as geom
 	FROM tmpwaypoints
 ;
@@ -956,7 +956,7 @@ FROM tmpcollectionofwaypoints
 */
 
 DROP TABLE IF EXISTS tmproadslist4;
-CREATE TEMPORARY TABLE tmproadslist4 ON COMMIT DROP AS
+CREATE TEMPORARY TABLE tmproadslist4 AS
 
 	SELECT (ST_Dump(ST_LineMerge(ST_Collect(tmproadslist3.geom)))).geom as geom
 	 FROM tmproadslist3
@@ -1044,7 +1044,7 @@ WHERE tmproadslist4.path_id=t2.path_id AND tmproadslist4.cluster1>tmproadslist4.
 
 DROP TABLE IF EXISTS tmpsimilarpaths; 
 
-CREATE TEMPORARY TABLE tmpsimilarpaths ON COMMIT DROP AS
+CREATE TEMPORARY TABLE tmpsimilarpaths AS
 SELECT t1.cluster1,t1.cluster2,t1.path_id as pathid1,t2.path_id as pathid2, ST_Contains(ST_Buffer(t1.geom,60),t2.geom) as isSimilar
 FROM tmproadslist4 t1, tmproadslist4 t2
 WHERE
@@ -1057,7 +1057,7 @@ t1.cluster1=t2.cluster1 AND t1.cluster2=t2.cluster2 AND t1.path_id<=t2.path_id
 
 DROP TABLE IF EXISTS tmpfillclusters; 
 
-CREATE TEMPORARY TABLE tmpfillclusters ON COMMIT DROP AS
+CREATE TEMPORARY TABLE tmpfillclusters AS
 SELECT DISTINCT cluster1,cluster2, pathid1 as cluster1st
 FROM tmpsimilarpaths
 ;
@@ -1089,7 +1089,7 @@ WHERE tmpsimilarpaths.isSimilar=true AND tmpsimilarpaths.pathid2=cluster1st AND 
 
 DROP TABLE IF EXISTS tmpclusters;
 
-CREATE TEMPORARY TABLE tmpclusters ON COMMIT DROP AS
+CREATE TEMPORARY TABLE tmpclusters AS
 	SELECT DISTINCT cluster1,cluster2, sort(clustermembers) as clustermembers
 	FROM tmpfillclusters
 ;
@@ -1114,7 +1114,7 @@ WHERE tmpclusters.clustermembers <@ foo.clustermembers AND foo.cluster_id<>tmpcl
 */
 
 DROP TABLE IF EXISTS tmpclusteredpaths;
-CREATE TEMPORARY TABLE tmpclusteredpaths ON COMMIT DROP AS
+CREATE TEMPORARY TABLE tmpclusteredpaths AS
 
 
 	WITH minlengthofcluster AS
