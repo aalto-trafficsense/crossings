@@ -121,7 +121,7 @@ ALTER TABLE roadslist ALTER COLUMN rail SET NOT NULL;
 */
 
 INSERT INTO roadslist	
-	SELECT
+	SELECT DISTINCT ON (osm_id)
 		osm_id as road_id, false, false,false, true, way as geom
 	FROM
 		planet_osm_line
