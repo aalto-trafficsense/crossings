@@ -106,7 +106,7 @@ CREATE TABLE roadslist AS
 ;
 
 
-
+ALTER TABLE roadslist ADD PRIMARY KEY (road_id);
 
 
 
