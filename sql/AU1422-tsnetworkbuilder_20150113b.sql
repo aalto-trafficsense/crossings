@@ -183,6 +183,10 @@ nodesofways.id=roadslist.road_id
 
 ;
 
+ALTER TABLE roadsnodesinorder ALTER COLUMN road_id SET NOT NULL;
+ALTER TABLE roadsnodesinorder ALTER COLUMN node_id SET NOT NULL;
+ALTER TABLE roadsnodesinorder ALTER COLUMN rn SET NOT NULL;
+
 CREATE INDEX ON roadsnodesinorder (road_id);
 CREATE INDEX ON roadsnodesinorder (node_id);
 
