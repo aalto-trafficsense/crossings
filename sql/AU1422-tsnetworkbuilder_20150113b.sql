@@ -94,7 +94,7 @@ CREATE TABLE roadslist AS
 
 
 
-	SELECT DISTINCT
+	SELECT DISTINCT ON (osm_id)
 		osm_id as road_id, highwaymodes.motorcar, highwaymodes.bicycle,highwaymodes.foot, highwaymodes.rail, way as geom
 	FROM
 		planet_osm_line,
