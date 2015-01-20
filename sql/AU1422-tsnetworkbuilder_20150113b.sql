@@ -271,22 +271,16 @@ DROP TABLE IF EXISTS poimplist;
 CREATE TEMPORARY TABLE poimplist AS
 
 
-SELECT roadsnodesdata.node_id, roadsnodesdata.geom
+SELECT node_id, geom
 FROM
-	(
-		SELECT roadsnodesinorder.node_id,COUNT(roadslist.road_id) as nofroads
-		FROM	
-			roadslist,
-			roadsnodesinorder
-		WHERE
-			roadsnodesinorder.road_id=roadslist.road_id
-		GROUP BY
-			roadsnodesinorder.node_id
-	) as foo,
 	roadsnodesdata
 WHERE
-	foo.node_id=roadsnodesdata.node_id AND
-	nofroads>2
+	node_id IN (
+		SELECT node_id
+		FROM roadsnodesinorder
+		GROUP BY node_id
+		HAVING COUNT(road_id) > 2
+	)
 ;
 
 
