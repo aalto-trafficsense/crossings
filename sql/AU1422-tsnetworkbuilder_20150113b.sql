@@ -228,6 +228,9 @@ CREATE TABLE roadsnodesdata AS
 ;
 		
 
+ALTER TABLE roadsnodesdata ALTER COLUMN node_id SET NOT NULL;
+ALTER TABLE roadsnodesdata ALTER COLUMN geom SET NOT NULL;
+
 
 /* Improve Performance */
 
