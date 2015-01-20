@@ -183,6 +183,9 @@ nodesofways.id=roadslist.road_id
 
 ;
 
+CREATE INDEX ON roadsnodesinorder (road_id);
+CREATE INDEX ON roadsnodesinorder (node_id);
+
 
 
 /* CreateRoadsNodesData */
