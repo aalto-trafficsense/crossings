@@ -315,7 +315,7 @@ JOIN
 ON roadsnodesdata.node_id = nodes.node_id
 ;
 
-ALTER TABLE poimplist ALTER COLUMN node_id SET NOT NULL;
+ALTER TABLE poimplist ADD PRIMARY KEY (node_id);
 ALTER TABLE poimplist ALTER COLUMN geom SET NOT NULL;
 
 
