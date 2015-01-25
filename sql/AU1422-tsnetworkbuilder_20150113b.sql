@@ -172,20 +172,22 @@ CREATE TEMPORARY TABLE roadsnodesinorder AS
 */
 
 
-SELECT road_id, nodesofways.rn, nodesofways.nodes as node_id
-FROM  (
-   SELECT id, generate_subscripts(planet_osm_ways.nodes, 1) AS rn, unnest(planet_osm_ways.nodes) AS nodes
-   FROM   planet_osm_ways
-   ) AS nodesofways,
-   roadslist
-WHERE
-nodesofways.id=roadslist.road_id
-
-;
+SELECT roadslist.road_id, node_num AS rn, node_id, (node_num = 1 OR node_num = nodes.count) AS is_endpoint
+FROM roadslist
+JOIN
+	(
+		SELECT id AS road_id, node_id, node_num, array_length(nodes, 1) AS count
+		FROM
+			planet_osm_ways,
+			unnest(nodes)
+		WITH ORDINALITY x(node_id, node_num)
+	) AS nodes
+ON roadslist.road_id = nodes.road_id;
 
 ALTER TABLE roadsnodesinorder ALTER COLUMN road_id SET NOT NULL;
 ALTER TABLE roadsnodesinorder ALTER COLUMN node_id SET NOT NULL;
 ALTER TABLE roadsnodesinorder ALTER COLUMN rn SET NOT NULL;
+ALTER TABLE roadsnodesinorder ALTER COLUMN is_endpoint SET NOT NULL;
 
 CREATE INDEX ON roadsnodesinorder (road_id);
 CREATE INDEX ON roadsnodesinorder (node_id);
