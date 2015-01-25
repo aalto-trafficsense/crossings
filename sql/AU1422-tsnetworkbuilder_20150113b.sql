@@ -304,9 +304,11 @@ ALTER TABLE poimplist ALTER COLUMN geom SET NOT NULL;
 /* Find nodes that are part of 2 roads, first and/or last items of both roads, and mode related deadends.
 */
 
+/* Joonas: This query is faulty, because the last WHERE expression is never true, because nofroads=nofmotorcar=nofbicycle=noffoot=nofrail (see subquery for the reason) */
 INSERT INTO poimplist
 	SELECT DISTINCT roadsnodesdata.node_id, roadsnodesdata.geom
 	FROM
+		/* Joonas: This subquery is faulty, because COUNT(expression) returns the number of non-null rows. The columns motorcar, bicycle, foot, rail are false or true, so the counts will always be same as nofroads. */
 		(
 			SELECT roadsnodesinorder.node_id,COUNT(roadslist.road_id) as nofroads, COUNT(roadslist.motorcar) as nofmotorcar,COUNT(roadslist.bicycle) as nofbicycle,COUNT(roadslist.foot) as noffoot,COUNT(roadslist.rail) as nofrail
 			FROM	
