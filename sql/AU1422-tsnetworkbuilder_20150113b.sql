@@ -297,14 +297,17 @@ WITH
 	),
 
 	nodes AS (
-		SELECT node_id FROM nodes_intersections
-		UNION
-		SELECT node_id FROM nodes_deadends
-		UNION
-		SELECT node_id FROM nodes_intersections_2roads
+		SELECT DISTINCT node_id FROM
+		(
+			SELECT node_id FROM nodes_intersections
+			UNION
+			SELECT node_id FROM nodes_deadends
+			UNION
+			SELECT node_id FROM nodes_intersections_2roads
+		) AS nodes
 	)
 
-SELECT roadsnodesdata.node_id, roadsnodesdata.geom
+SELECT nodes.node_id, roadsnodesdata.geom
 FROM
 	nodes
 JOIN
