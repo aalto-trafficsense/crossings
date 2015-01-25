@@ -165,13 +165,6 @@ DROP TABLE IF EXISTS roadsnodesinorder;
 
 CREATE TEMPORARY TABLE roadsnodesinorder AS
 
-/*
-	The use of unnest speeds up the query and everything seems OK, although theoretically only the generate_subscripts version guarantees ordinal numbers of elements in the original array.
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-*/
-
-
 SELECT roadslist.road_id, node_num AS rn, node_id, (node_num = 1 OR node_num = nodes.count) AS is_endpoint
 FROM roadslist
 JOIN
