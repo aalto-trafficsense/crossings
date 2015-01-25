@@ -284,10 +284,24 @@ WITH
 		/* bool_or is needed, because we are interested in nodes that are endpoints in *at least one* road */
 		HAVING COUNT(road_id) = 1 AND bool_or(is_endpoint) IS TRUE
 	),
+
+	/* Find nodes that are part of 2 roads, and not the first or the last one of both of them.
+		These nodes are simple intersections.
+	*/
+	nodes_intersections_2roads AS (
+		SELECT node_id
+		FROM roadsnodesinorder
+		GROUP BY node_id
+		/* bool_or is needed, because we are interested in nodes that are not endpoints in *both* roads */
+		HAVING COUNT(road_id) = 2 AND bool_and(is_endpoint) IS FALSE
+	),
+
 	nodes AS (
 		SELECT node_id FROM nodes_intersections
 		UNION
 		SELECT node_id FROM nodes_deadends
+		UNION
+		SELECT node_id FROM nodes_intersections_2roads
 	)
 
 SELECT roadsnodesdata.node_id, roadsnodesdata.geom
@@ -301,38 +315,6 @@ ON roadsnodesdata.node_id = nodes.node_id
 ALTER TABLE poimplist ALTER COLUMN node_id SET NOT NULL;
 ALTER TABLE poimplist ALTER COLUMN geom SET NOT NULL;
 
-
-
-/* Find nodes that are part of 2 roads, and not the first or the last one of both of them.
-	These nodes are simple intersections.
-*/
-
-INSERT INTO poimplist
-	SELECT roadsnodesdata.node_id, roadsnodesdata.geom
-	FROM
-		(
-			SELECT roadsnodesinorder.node_id,COUNT(roadslist.road_id) as nofroads
-			FROM	
-				roadslist,
-				roadsnodesinorder
-			WHERE
-				roadsnodesinorder.road_id=roadslist.road_id
-			GROUP BY
-				roadsnodesinorder.node_id
-		) as foo,
-		(
-				SELECT road_id, max(rn) as nofrn FROM roadsnodesinorder GROUP BY road_id
-		) as foo2,
-		roadsnodesdata,
-		roadsnodesinorder
-	WHERE
-		foo.node_id=roadsnodesdata.node_id AND
-		foo.node_id=roadsnodesinorder.node_id AND
-		nofroads=2 AND
-		roadsnodesinorder.road_id=foo2.road_id AND
-		roadsnodesinorder.rn<>1 AND roadsnodesinorder.rn<>foo2.nofrn
-		
-;
 
 
 /* Find nodes that are part of 2 roads, first and/or last items of both roads, and mode related deadends.
