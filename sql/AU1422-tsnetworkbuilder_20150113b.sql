@@ -261,28 +261,24 @@ CREATE UNIQUE INDEX "idx-roadsnodesdata-node_id"
 
 DROP TABLE IF EXISTS poimplist;
 
-
+CREATE TEMPORARY TABLE poimplist AS
 
 /* Find nodes in more than 2 roads.
 	These nodes are intersections in any case.
 */
+WITH nodes_intersections AS (
+	SELECT node_id
+	FROM roadsnodesinorder
+	GROUP BY node_id
+	HAVING COUNT(road_id) > 2
+)
 
-
-
-
-CREATE TEMPORARY TABLE poimplist AS
-
-
-SELECT node_id, geom
+SELECT roadsnodesdata.node_id, roadsnodesdata.geom
 FROM
+	nodes_intersections AS nodes
+JOIN
 	roadsnodesdata
-WHERE
-	node_id IN (
-		SELECT node_id
-		FROM roadsnodesinorder
-		GROUP BY node_id
-		HAVING COUNT(road_id) > 2
-	)
+ON roadsnodesdata.node_id = nodes.node_id
 ;
 
 ALTER TABLE poimplist ALTER COLUMN node_id SET NOT NULL;
