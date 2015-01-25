@@ -256,56 +256,44 @@ DROP TABLE IF EXISTS poimplist;
 
 CREATE TEMPORARY TABLE poimplist AS
 
-WITH
+WITH nodes AS (
 	/* Find nodes in more than 2 roads.
 		These nodes are intersections in any case.
 	*/
-	nodes_intersections AS (
-		SELECT node_id
-		FROM roadsnodesinorder
-		GROUP BY node_id
-		HAVING COUNT(road_id) > 2
-	),
+	SELECT node_id
+	FROM roadsnodesinorder
+	GROUP BY node_id
+	HAVING COUNT(road_id) > 2
+
+	UNION
 
 	/* Find nodes that are geometrical dead ends.
 		These nodes are POImps independently of the mode.
 	*/
-	nodes_deadends AS (
-		SELECT node_id
-		FROM roadsnodesinorder
-		GROUP BY node_id
-		/* bool_or is needed, because we are interested in nodes that are endpoints in *at least one* road */
-		HAVING COUNT(road_id) = 1 AND bool_or(is_endpoint) IS TRUE
-	),
+	SELECT node_id
+	FROM roadsnodesinorder
+	GROUP BY node_id
+	/* bool_or is needed, because we are interested in nodes that are endpoints in *at least one* road */
+	HAVING COUNT(road_id) = 1 AND bool_or(is_endpoint) IS TRUE
+
+	UNION
 
 	/* Find nodes that are part of 2 roads, and not the first or the last one of both of them.
 		These nodes are simple intersections.
 	*/
-	nodes_intersections_2roads AS (
-		SELECT node_id
-		FROM roadsnodesinorder
-		GROUP BY node_id
-		/* bool_or is needed, because we are interested in nodes that are not endpoints in *both* roads */
-		HAVING COUNT(road_id) = 2 AND bool_and(is_endpoint) IS FALSE
-	),
+	SELECT node_id
+	FROM roadsnodesinorder
+	GROUP BY node_id
+	/* bool_or is needed, because we are interested in nodes that are not endpoints in *both* roads */
+	HAVING COUNT(road_id) = 2 AND bool_and(is_endpoint) IS FALSE
+)
 
-	nodes AS (
-		SELECT DISTINCT node_id FROM
-		(
-			SELECT node_id FROM nodes_intersections
-			UNION
-			SELECT node_id FROM nodes_deadends
-			UNION
-			SELECT node_id FROM nodes_intersections_2roads
-		) AS nodes
-	)
-
-SELECT nodes.node_id, roadsnodesdata.geom
+SELECT distinct_nodes.node_id, roadsnodesdata.geom
 FROM
-	nodes
+	(SELECT DISTINCT node_id FROM nodes) AS distinct_nodes
 JOIN
 	roadsnodesdata
-ON roadsnodesdata.node_id = nodes.node_id
+ON roadsnodesdata.node_id = distinct_nodes.node_id
 ;
 
 ALTER TABLE poimplist ADD PRIMARY KEY (node_id);
