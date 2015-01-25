@@ -263,19 +263,36 @@ DROP TABLE IF EXISTS poimplist;
 
 CREATE TEMPORARY TABLE poimplist AS
 
-/* Find nodes in more than 2 roads.
-	These nodes are intersections in any case.
-*/
-WITH nodes_intersections AS (
-	SELECT node_id
-	FROM roadsnodesinorder
-	GROUP BY node_id
-	HAVING COUNT(road_id) > 2
-)
+WITH
+	/* Find nodes in more than 2 roads.
+		These nodes are intersections in any case.
+	*/
+	nodes_intersections AS (
+		SELECT node_id
+		FROM roadsnodesinorder
+		GROUP BY node_id
+		HAVING COUNT(road_id) > 2
+	),
+
+	/* Find nodes that are geometrical dead ends.
+		These nodes are POImps independently of the mode.
+	*/
+	nodes_deadends AS (
+		SELECT node_id
+		FROM roadsnodesinorder
+		GROUP BY node_id
+		/* bool_or is needed, because we are interested in nodes that are endpoints in *at least one* road */
+		HAVING COUNT(road_id) = 1 AND bool_or(is_endpoint) IS TRUE
+	),
+	nodes AS (
+		SELECT node_id FROM nodes_intersections
+		UNION
+		SELECT node_id FROM nodes_deadends
+	)
 
 SELECT roadsnodesdata.node_id, roadsnodesdata.geom
 FROM
-	nodes_intersections AS nodes
+	nodes
 JOIN
 	roadsnodesdata
 ON roadsnodesdata.node_id = nodes.node_id
@@ -283,39 +300,6 @@ ON roadsnodesdata.node_id = nodes.node_id
 
 ALTER TABLE poimplist ALTER COLUMN node_id SET NOT NULL;
 ALTER TABLE poimplist ALTER COLUMN geom SET NOT NULL;
-
-
-/* Find nodes that are geometrical dead ends.
-	These nodes are POImps independently of the mode.
-*/
-
-INSERT INTO poimplist
-	SELECT roadsnodesdata.node_id, roadsnodesdata.geom
-	FROM
-		(
-			SELECT roadsnodesinorder.node_id,COUNT(roadslist.road_id) as nofroads
-			FROM	
-				roadslist,
-				roadsnodesinorder
-			WHERE
-				roadsnodesinorder.road_id=roadslist.road_id
-			GROUP BY
-				roadsnodesinorder.node_id
-		) as foo,
-		(
-			SELECT road_id, max(rn) as nofrn FROM roadsnodesinorder GROUP BY road_id
-		) as foo2,
-		roadsnodesdata,
-		roadsnodesinorder
-	WHERE
-		foo.node_id=roadsnodesdata.node_id AND
-		nofroads=1 AND
-		roadsnodesinorder.node_id=foo.node_id AND roadsnodesinorder.road_id=foo2.road_id AND (roadsnodesinorder.rn=1 OR roadsnodesinorder.rn=nofrn)
-		
-;
-
-
-
 
 
 
