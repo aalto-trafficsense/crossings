@@ -91,7 +91,8 @@ DROP TABLE IF EXISTS roadslist;
 
 CREATE TABLE roadslist AS
 
-
+/* RKM: How about selecting the ones, which have a name? Appears not to be present.
+   	Trunk roads already added by Joonas elsewhere. */
 
 
 	SELECT DISTINCT ON (osm_id)
@@ -118,6 +119,9 @@ ALTER TABLE roadslist ALTER COLUMN rail SET NOT NULL;
 ---------------------------
 
 	Information about Trams and Trains is contained in the same table but in the 'railway' and not the 'highway' field. 
+*/
+
+/* RKM: Do we really want rails? Trams would be more critical.
 */
 
 INSERT INTO roadslist	
@@ -165,6 +169,10 @@ DROP TABLE IF EXISTS roadsnodesinorder;
 
 CREATE TEMPORARY TABLE roadsnodesinorder AS
 
+/* RKM: Tracks the list of nodes - on longer term this would be the place, where node discontinuities could be addressed?
+   	First 2 referrals to "nodes" are on the osm_ways "nodes" column [which is an ordered array],
+	"AS nodes" creates a new "nodes" table. */
+
 SELECT roadslist.road_id, node_num AS rn, node_id, (node_num = 1 OR node_num = nodes.count) AS is_endpoint
 FROM roadslist
 JOIN
@@ -176,6 +184,8 @@ JOIN
 		WITH ORDINALITY x(node_id, node_num)
 	) AS nodes
 ON roadslist.road_id = nodes.road_id;
+
+/* RKM: Why not first create the table with constraints and then populate the table? */
 
 ALTER TABLE roadsnodesinorder ALTER COLUMN road_id SET NOT NULL;
 ALTER TABLE roadsnodesinorder ALTER COLUMN node_id SET NOT NULL;
@@ -198,7 +208,8 @@ CREATE INDEX ON roadsnodesinorder (node_id);
 	The geometrical information is included in other tables too, even if there might be joins to the current table. The reason is that the visualization of a table requires the geometrical information being existed in one of its fields and not in a joined field of another table. This means that a query cannot be visualized directly.
 */
 	
-
+/* RKM: Couldn't this have been combined with the previous step? It only seems to add the point geometry of the road nodes,
+   	although it is from a different table. */
 
 
 DROP TABLE IF EXISTS roadsnodesdata;
@@ -208,20 +219,12 @@ CREATE TABLE roadsnodesdata AS
 	SELECT 
 		roadsnodeslist.node_id, ST_SetSRID(ST_MakePoint((lon::double precision)/100,(lat::double precision)/100),900913) as geom
 
-	FROM
-		planet_osm_nodes,
-
-		(
-			SELECT DISTINCT
-				node_id
-			FROM
-				roadsnodesinorder
-		) AS roadsnodeslist
-
-		WHERE
-			planet_osm_nodes.id=roadsnodeslist.node_id
+	FROM planet_osm_nodes,
+	     ( SELECT DISTINCT node_id
+	       FROM roadsnodesinorder
+	     ) AS roadsnodeslist
+	WHERE planet_osm_nodes.id=roadsnodeslist.node_id
 ;
-		
 
 ALTER TABLE roadsnodesdata ALTER COLUMN node_id SET NOT NULL;
 ALTER TABLE roadsnodesdata ALTER COLUMN geom SET NOT NULL;
@@ -235,16 +238,6 @@ CREATE UNIQUE INDEX "idx-roadsnodesdata-node_id"
   (node_id);
 
 
-
-
-
-
-
-
-
-
-
-
 /* Create Points of Importance */
 
 /* 	This query finds the nodes which are Points of Importance (POImps).
@@ -255,6 +248,10 @@ CREATE UNIQUE INDEX "idx-roadsnodesdata-node_id"
 DROP TABLE IF EXISTS poimplist;
 
 CREATE TEMPORARY TABLE poimplist AS
+
+/* RKM: Could the first and 3rd (road_id > 2 and (road_id=2 AND endpoint=false)) be combined?
+   	Basically we want everything else than nodes, which have 1 road_id and are not endpoints.
+	Could be done with 1 SELECT and NOT around the above clause. */ 
 
 WITH nodes AS (
 	/* Find nodes in more than 2 roads.
@@ -274,6 +271,7 @@ WITH nodes AS (
 	FROM roadsnodesinorder
 	GROUP BY node_id
 	/* bool_or is needed, because we are interested in nodes that are endpoints in *at least one* road */
+	/* RKM: Only 1 road_id, so IS the bool_or really needed?? Should be just one node. */
 	HAVING COUNT(road_id) = 1 AND bool_or(is_endpoint) IS TRUE
 
 	UNION
@@ -284,9 +282,11 @@ WITH nodes AS (
 	SELECT node_id
 	FROM roadsnodesinorder
 	GROUP BY node_id
-	/* bool_or is needed, because we are interested in nodes that are not endpoints in *both* roads */
+	/* bool_and is needed, because we are interested in nodes that are not endpoints in neither of the roads */
 	HAVING COUNT(road_id) = 2 AND bool_and(is_endpoint) IS FALSE
 )
+
+/* RKM: Is the SELECT DISTINCT needed below? Looks like the results from above are already unique? */
 
 SELECT distinct_nodes.node_id, roadsnodesdata.geom
 FROM
@@ -303,6 +303,8 @@ ALTER TABLE poimplist ALTER COLUMN geom SET NOT NULL;
 
 /* Find nodes that are part of 2 roads, first and/or last items of both roads, and mode related deadends.
 */
+
+/* RKM: What does this add on top of the previous query?? */
 
 /* Joonas: This query is faulty, because the last WHERE expression is never true, because nofroads=nofmotorcar=nofbicycle=noffoot=nofrail (see subquery for the reason) */
 INSERT INTO poimplist
@@ -338,6 +340,8 @@ INSERT INTO poimplist
 	Append items from the 'planet_osm_point' table with the 'bus_stop' value in the highway field.
 */ 
 
+/* RKM: This likely to be moved to another position (i.e. bus stops not to be included in clustering) */
+
 INSERT INTO poimplist
 	SELECT
 		planet_osm_point.osm_id as node_id, planet_osm_point.way as geom
@@ -348,20 +352,12 @@ INSERT INTO poimplist
 ;
 
 
-
-
 /* Spatial Index to Improve the Performance */
 
 CREATE INDEX "idx-poimplist-geom"
   ON poimplist
   USING gist
   (geom);
-
-
-
-
-
-
 
 /* The following Function does the clustering of the POImps.
 --------------------------------------------------------------
@@ -403,15 +399,18 @@ CREATE INDEX "idx-tmppoimp2-geom"
   USING gist
   (the_geom);
 
+/* RKM: Why not add the region_id column when creating the table? */
 
 ALTER TABLE tmppoimp2 ADD COLUMN region_id integer;
 
-/*	At first, the fuction has a top-down step, in which regions are formed.
+/*	At first, the function has a top-down step, in which regions are formed.
 	Each region includes POImps that all of them are isolated from other regions (distance > radius) but can form clusters.
 	Thus, calculations are performed for items of the same region only.
 */
 
 DROP TABLE IF EXISTS poimpregions;
+
+/* RKM: This is where we stopped 26.2.2015. */
 
 CREATE TEMPORARY TABLE poimpregions AS
 	SELECT ST_Dump(ST_UNION(ST_Buffer(tmppoimp2.the_geom,radius))) as dump
