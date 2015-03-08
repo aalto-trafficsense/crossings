@@ -37,10 +37,10 @@ INSERT INTO poimps
     HAVING COUNT(road_id) = 2 AND bool_and(is_endpoint) IS FALSE
   )
   SELECT
-    distinct_nodes.node_id,
+    nodes.node_id,
     -- 100 is some kind of scaling factor. lon and lat are integers in the planet_osm_nodes table
     ST_SetSRID(ST_MakePoint(lon::double precision / 100, lat::double precision / 100), 3857)
-  FROM (SELECT DISTINCT node_id FROM nodes) AS distinct_nodes
+  FROM nodes
   JOIN planet_osm_nodes
   ON id = node_id
 ;
