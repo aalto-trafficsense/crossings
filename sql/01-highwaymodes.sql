@@ -30,7 +30,6 @@ VALUES
   ('primary_link',  'YES',    'YES',   'YES'),
   ('residential',   'YES',    'YES',   'YES'),
   ('secondary',     'YES',    'YES',   'YES'),
-  ('service',       'YES',    'YES',   'YES'),
   ('steps',         'no',     'no',    'YES'),
   ('tertiary',      'YES',    'YES',   'YES'),
   ('tertiary_link', 'YES',    'YES',   'YES'),
