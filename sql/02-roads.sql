@@ -4,7 +4,11 @@ DROP TABLE IF EXISTS roads;
 
 -- TODO: This table could be TEMPORARY
 CREATE UNLOGGED TABLE roads (
-  id       bigint PRIMARY KEY,
+  -- This table doesn't have a primary key, because we don't need any.
+  -- osm2pgsql splits long ways to max 100km segments, so osm_id is not unique
+  -- Since this table is used for geometry-based queries, using the 100km
+  -- segments without joining them is still a good idea.
+  osm_id   bigint NOT NULL,
   geometry geometry(linestring, 3857) NOT NULL,
   motorcar boolean NOT NULL,
   bicycle  boolean NOT NULL,
@@ -13,28 +17,46 @@ CREATE UNLOGGED TABLE roads (
 );
 
 INSERT INTO roads
-  SELECT DISTINCT ON (osm_id)
+  WITH roads AS (
+    -- Roads based on highwaymodes configuration table
+    SELECT
+      osm_id,
+      way,
+      highwaymodes.motorcar, highwaymodes.bicycle,
+      highwaymodes.foot, false AS rail
+    FROM planet_osm_line
+    JOIN highwaymodes USING (highway)
+    WHERE highwaymodes.motorcar = true
+
+    UNION
+
+    -- We want some of the unclassified roads as well
+    SELECT
+      osm_id,
+      way,
+      true, false,
+      false, false
+    FROM planet_osm_line
+    WHERE highway = 'unclassified' AND name IS NOT NULL
+
+    UNION
+
+    -- Railways
+    SELECT
+      osm_id,
+      way,
+      false, false,
+      false, true
+    FROM planet_osm_line
+    WHERE railway IN ('rail', 'subway', 'tram')
+  )
+  SELECT
     osm_id,
     ST_Transform(way, 3857),
-    highwaymodes.motorcar,
-    highwaymodes.bicycle,
-    highwaymodes.foot,
-    false
-  FROM planet_osm_line
-  JOIN highwaymodes USING (highway)
-  WHERE highwaymodes.motorcar = true
+    roads.motorcar, roads.bicycle,
+    roads.foot, roads.rail
+  FROM roads
 ;
 
-INSERT INTO roads
-  SELECT DISTINCT ON (osm_id)
-    osm_id,
-    ST_Transform(way, 3857),
-    false,
-    false,
-    false,
-    true
-  FROM planet_osm_line
-  WHERE railway IN ('rail', 'subway', 'tram')
-;
-
+CREATE INDEX ON roads (osm_id);
 CREATE INDEX ON roads USING GIST(geometry);
