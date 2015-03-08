@@ -25,5 +25,4 @@ INSERT INTO roads_nodes
   ON osm_id = nodes.road_id
 ;
 
-CREATE INDEX ON roads_nodes (road_id, is_endpoint);
-CREATE INDEX ON roads_nodes (node_id);
+CREATE INDEX ON roads_nodes (node_id, road_id, is_endpoint);
