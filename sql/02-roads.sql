@@ -28,7 +28,7 @@ INSERT INTO roads
     JOIN highwaymodes USING (highway)
     WHERE highwaymodes.motorcar = true
 
-    UNION
+    UNION ALL
 
     -- We want some of the unclassified roads as well
     SELECT
@@ -39,7 +39,7 @@ INSERT INTO roads
     FROM planet_osm_line
     WHERE highway = 'unclassified' AND name IS NOT NULL
 
-    UNION
+    UNION ALL
 
     -- Railways
     SELECT

@@ -16,7 +16,7 @@ INSERT INTO poimps
     GROUP BY node_id
     HAVING COUNT(road_id) > 2
 
-    UNION
+    UNION ALL
 
     -- Geometrical dead ends
     SELECT node_id
@@ -26,7 +26,7 @@ INSERT INTO poimps
     -- endpoints in *at least one* road
     HAVING COUNT(road_id) = 1 AND bool_or(is_endpoint) IS TRUE
 
-    UNION
+    UNION ALL
 
     -- Simple intersections
     SELECT node_id
