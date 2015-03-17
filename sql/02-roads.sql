@@ -8,7 +8,7 @@ CREATE TABLE roads (
   -- Since this table is used for geometry-based queries, using the 100km
   -- segments without joining them is still a good idea.
   osm_id   bigint NOT NULL,
-  geometry geometry(linestring, 3857) NOT NULL,
+  geo      geography(linestring, 4326) NOT NULL,
   motorcar boolean NOT NULL,
   bicycle  boolean NOT NULL,
   foot     boolean NOT NULL,
@@ -51,11 +51,11 @@ INSERT INTO roads
   )
   SELECT
     osm_id,
-    ST_Transform(way, 3857),
+    ST_Transform(way, 4326),
     roads.motorcar, roads.bicycle,
     roads.foot, roads.rail
   FROM roads
 ;
 
 CREATE INDEX ON roads (osm_id);
-CREATE INDEX ON roads USING GIST(geometry);
+CREATE INDEX ON roads USING GIST(geo);
