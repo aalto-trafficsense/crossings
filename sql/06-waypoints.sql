@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS waypoints;
 
 CREATE TABLE waypoints (
   id        bigint PRIMARY KEY,
-  geometry  geometry(Point, 4326) NOT NULL,
+  geo       geography(point, 4326) NOT NULL,
   osm_nodes bigint[] NOT NULL
 );
 
@@ -12,7 +12,7 @@ INSERT INTO waypoints
   SELECT
     (round(ST_X(cluster.center) * 10000)) * 1000000 +
     (round(ST_Y(cluster.center) * 10000)),
-    cluster.center AS geometry,
+    cluster.center,
     cluster.nodes AS nodes
   FROM (
     SELECT
@@ -24,4 +24,4 @@ INSERT INTO waypoints
 ;
 
 CREATE INDEX ON waypoints USING GIN(osm_nodes);
-CREATE INDEX ON waypoints USING GIST(geometry);
+CREATE INDEX ON waypoints USING GIST(geo);
