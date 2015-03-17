@@ -2,8 +2,7 @@
 
 DROP TABLE IF EXISTS roads;
 
--- TODO: This table could be TEMPORARY
-CREATE UNLOGGED TABLE roads (
+CREATE TABLE roads (
   -- This table doesn't have a primary key, because we don't need any.
   -- osm2pgsql splits long ways to max 100km segments, so osm_id is not unique
   -- Since this table is used for geometry-based queries, using the 100km
