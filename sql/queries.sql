@@ -4,3 +4,5 @@
 \ir 04-poimps.sql
 \ir 05-clustering.sql
 \ir 06-waypoints.sql
+\ir 07-roads_joins.sql
+\ir 08-roads_waypoints.sql
