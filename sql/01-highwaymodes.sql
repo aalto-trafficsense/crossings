@@ -35,5 +35,6 @@ VALUES
   ('tertiary',       'YES',    'YES',   'YES'),
   ('tertiary_link',  'YES',    'YES',   'YES'),
   ('trunk',          'YES',    'no',    'no'),
+  ('trunk_link',     'YES',    'no',    'no'),
   ('track',          'no',     'YES',   'YES'),
   ('unclassified',   'YES',    'no',    'no');
